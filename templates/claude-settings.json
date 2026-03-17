@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m tianxing.*)",
+      "Bash(tianxing *)",
+      "Bash(latexmk *)",
+      "Bash(pdflatex *)",
+      "Bash(xelatex *)",
+      "Bash(bibtex *)",
+      "Bash(biber *)",
+      "Bash(pytest *)",
+      "Bash(git tag *)",
+      "Bash(git diff *)",
+      "Bash(git status*)",
+      "Bash(git log *)",
+      "Read(**)",
+      "Edit(paper/**)",
+      "Edit(code/**)",
+      "Edit(results/**)",
+      "Edit(config.yaml)",
+      "Edit(experiment_map.json)",
+      "Write(reviews/**)",
+      "Write(logs/**)",
+      "Write(status/**)"
+    ],
+    "deny": [
+      "Read(.env*)",
+      "Read(secrets/**)"
+    ]
+  }
+}

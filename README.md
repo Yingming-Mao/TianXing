@@ -23,7 +23,7 @@ cd /path/to/your-paper-project
 bash /path/to/TianXing/scripts/setup_project.sh
 ```
 
-This creates the required directory structure and copies config templates.
+This creates the required directory structure, copies config templates, and configures Claude Code permissions (`.claude/settings.json`) so that `/review-loop` can run without manual confirmation for each step.
 
 ### 2. Configure
 

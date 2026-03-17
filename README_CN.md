@@ -23,7 +23,7 @@ cd /path/to/your-paper-project
 bash /path/to/TianXing/scripts/setup_project.sh
 ```
 
-脚本会自动创建所需的目录结构并复制配置模板。
+脚本会自动创建所需的目录结构、复制配置模板，并配置 Claude Code 权限（`.claude/settings.json`），使 `/review-loop` 可以自动运行，无需每步手动确认。
 
 ### 2. 配置
 

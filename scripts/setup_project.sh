@@ -70,6 +70,46 @@ else
     echo "  ✓ Created .gitignore with logs/"
 fi
 
+# Configure Claude Code permissions for TianXing
+if [ ! -f .claude/settings.json ]; then
+    cat > .claude/settings.json << 'SETTINGS'
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m tianxing.*)",
+      "Bash(tianxing *)",
+      "Bash(latexmk *)",
+      "Bash(pdflatex *)",
+      "Bash(xelatex *)",
+      "Bash(bibtex *)",
+      "Bash(biber *)",
+      "Bash(pytest *)",
+      "Bash(git tag *)",
+      "Bash(git diff *)",
+      "Bash(git status*)",
+      "Bash(git log *)",
+      "Read(**)",
+      "Edit(paper/**)",
+      "Edit(code/**)",
+      "Edit(results/**)",
+      "Edit(config.yaml)",
+      "Edit(experiment_map.json)",
+      "Write(reviews/**)",
+      "Write(logs/**)",
+      "Write(status/**)"
+    ],
+    "deny": [
+      "Read(.env*)",
+      "Read(secrets/**)"
+    ]
+  }
+}
+SETTINGS
+    echo "  ✓ Created .claude/settings.json (TianXing permissions)"
+else
+    echo "  • .claude/settings.json already exists, skipping"
+fi
+
 # Generate experiment map
 if command -v python &> /dev/null && python -c "import tianxing" 2>/dev/null; then
     if [ ! -f experiment_map.json ]; then
