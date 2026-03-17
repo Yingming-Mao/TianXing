@@ -76,7 +76,7 @@ if [ ! -f .claude/settings.json ]; then
 {
   "permissions": {
     "allow": [
-      "Bash(python -m tianxing.*)",
+      "Bash(*python -m tianxing.*)",
       "Bash(tianxing *)",
       "Bash(latexmk *)",
       "Bash(pdflatex *)",

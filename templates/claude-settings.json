@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -m tianxing.*)",
+      "Bash(*python -m tianxing.*)",
       "Bash(tianxing *)",
       "Bash(latexmk *)",
       "Bash(pdflatex *)",
