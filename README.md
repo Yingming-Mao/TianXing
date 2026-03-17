@@ -9,7 +9,7 @@ The system runs a Review → Plan → Modify → Validate → Record loop to ite
 ## Installation
 
 ```bash
-git clone https://github.com/yourname/paper-review-tools.git
+git clone https://github.com/Yingming-Mao/TianXing.git
 cd paper-review-tools
 pip install -e .
 ```
