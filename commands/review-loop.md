@@ -6,7 +6,9 @@ Run an automated paper review and improvement cycle.
 
 Follow these steps in order. If any step fails, handle according to the failure rules below.
 
-**Important**: When writing JSON content to temp files (reviews, plans, etc.), use the **Write tool** to create the file, then pass the file path to `tianxing.record_round`. Do NOT use bash heredoc (`cat <<EOF`) to write JSON — it triggers shell security warnings.
+**Important**:
+- When writing JSON content to temp files (reviews, plans, etc.), use the **Write tool** to create the file, then pass the file path to `tianxing.record_round`. Do NOT use bash heredoc (`cat <<EOF`) to write JSON — it triggers shell security warnings.
+- To find TianXing's prompt templates and other files, run: `python -c "from tianxing.utils import get_package_root; print(get_package_root())"`. This gives you the repo root; prompts are at `{root}/prompts/`, skills at `{root}/skills/`. **Do NOT use `find` to search for these files.**
 
 ### 1. Pre-check
 

@@ -89,6 +89,7 @@ if [ ! -f .claude/settings.json ]; then
       "Bash(git diff *)",
       "Bash(git status*)",
       "Bash(git log *)",
+      "Bash(find *)",
       "Read(**)",
       "Edit(paper/**)",
       "Edit(code/**)",

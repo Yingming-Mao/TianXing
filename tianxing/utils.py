@@ -159,6 +159,11 @@ def iso_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def get_package_root() -> Path:
+    """Return the TianXing repository root (parent of the tianxing/ package)."""
+    return Path(__file__).resolve().parent.parent
+
+
 def get_project_root() -> Path:
     """Find project root by looking for config.yaml or .git."""
     cur = Path.cwd()
