@@ -50,8 +50,76 @@ def _deep_merge(base: dict, override: dict) -> dict:
     return result
 
 
-def run_cmd(cmd: list[str], cwd: Optional[str] = None, timeout: int = 300) -> tuple[int, str, str]:
-    """Run a subprocess and return (returncode, stdout, stderr)."""
+def resolve_env(env_value: str) -> Optional[str]:
+    """Resolve project.env config to a conda run prefix or virtualenv python path.
+
+    Returns a shell prefix string to prepend to commands, or None if no env is configured.
+    Supported formats:
+      - conda env name: "myenv"           → "conda run -n myenv --no-banner"
+      - conda env path: "/path/to/myenv"  → "conda run -p /path/to/myenv --no-banner"
+      - virtualenv python: "/path/to/venv/bin/python" → uses that python directly
+      - empty string or None              → None (use current environment)
+    """
+    if not env_value:
+        return None
+    env_value = env_value.strip()
+    if not env_value:
+        return None
+
+    path = Path(env_value)
+    # Looks like a direct python binary path
+    if path.name == "python" or path.name.startswith("python3"):
+        if path.exists():
+            return str(path)
+        return None
+
+    # Looks like an absolute path to a conda env or venv directory
+    if path.is_absolute() and path.is_dir():
+        # Check if it's a venv (has bin/python)
+        venv_python = path / "bin" / "python"
+        if venv_python.exists():
+            return str(venv_python)
+        return None
+
+    # Treat as conda environment name
+    return env_value
+
+
+def wrap_cmd_with_env(cmd: list[str], env_value: Optional[str] = None) -> list[str]:
+    """Wrap a command to run in the configured experiment environment."""
+    if not env_value:
+        return cmd
+
+    resolved = resolve_env(env_value)
+    if resolved is None:
+        return cmd
+
+    path = Path(resolved)
+    # It's a python binary path — replace 'python' in cmd with it
+    if path.is_file():
+        if cmd and cmd[0] in ("python", "python3"):
+            return [resolved] + cmd[1:]
+        # For non-python commands (like pytest), run via the env's python -m
+        if cmd and cmd[0] == "pytest":
+            return [resolved, "-m", "pytest"] + cmd[1:]
+        return cmd
+
+    # It's a conda env name — use conda run
+    return ["conda", "run", "-n", resolved, "--no-banner"] + cmd
+
+
+def run_cmd(cmd: list[str], cwd: Optional[str] = None, timeout: int = 300,
+            env: Optional[str] = None) -> tuple[int, str, str]:
+    """Run a subprocess and return (returncode, stdout, stderr).
+
+    Args:
+        cmd: Command and arguments.
+        cwd: Working directory.
+        timeout: Timeout in seconds.
+        env: Optional experiment environment (conda env name, path, or python binary).
+             If provided, the command is wrapped to run in that environment.
+    """
+    cmd = wrap_cmd_with_env(cmd, env)
     try:
         r = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout)
         return r.returncode, r.stdout, r.stderr

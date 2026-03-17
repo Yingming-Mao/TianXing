@@ -105,6 +105,7 @@ The loop stops when: target score is reached, max rounds exceeded, score plateau
 
 See `config.example.yaml` for all options. Key settings:
 
+- `project.env` — experiment runtime environment: conda env name (`"myenv"`), conda env path, or virtualenv python path (default: current environment)
 - `review.max_rounds` — maximum improvement rounds (default: 3)
 - `review.target_score` — stop when this score is reached (default: 8.0)
 - `review.stop_on_plateau` — stop after N rounds with no improvement

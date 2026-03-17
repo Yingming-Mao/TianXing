@@ -3,6 +3,11 @@ project:
   paper_dir: "paper"
   code_dir: "code"
   results_dir: "results"
+  env: ""                       # experiment runtime environment (optional)
+                                # conda env name: "myenv"
+                                # conda env path: "/path/to/envs/myenv"
+                                # virtualenv python: "/path/to/venv/bin/python"
+                                # leave empty to use current environment
 
 compile:
   engine: "latexmk"

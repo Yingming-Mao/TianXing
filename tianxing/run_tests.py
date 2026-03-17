@@ -41,12 +41,13 @@ def main():
 
     command = test_cfg["command"]
     test_args = test_cfg.get("args", [])
+    experiment_env = cfg.get("project", {}).get("env", "")
 
     cmd = [command] + test_args
     if args.smoke_only and test_cfg.get("smoke_test_dir"):
         cmd.append(test_cfg["smoke_test_dir"])
 
-    code, stdout, stderr = run_cmd(cmd, timeout=300)
+    code, stdout, stderr = run_cmd(cmd, timeout=300, env=experiment_env)
 
     # Save log
     timestamp = iso_now().replace(":", "-")
