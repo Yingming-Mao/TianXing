@@ -113,9 +113,10 @@ The loop stops when: target score is reached, max rounds exceeded, score plateau
 
 See `config.example.yaml` for all options. Key settings:
 
+- `review.venue` — **required**: target venue (e.g. `"NeurIPS 2026"`, `"IEEE TPAMI"`, `"CHI"`). The reviewer adapts scoring to venue standards. The loop will not start without this.
 - `project.env` — experiment runtime environment: conda env name (`"myenv"`), conda env path, or virtualenv python path (default: current environment)
 - `review.max_rounds` — maximum improvement rounds (default: 3)
-- `review.target_score` — stop when this score is reached (default: 8.0)
+- `review.target_score` — stop when this score is reached (default: 7.0)
 - `review.stop_on_plateau` — stop after N rounds with no improvement
 - `compile.main_file` — path to your main .tex file
 - `tests.enabled` — enable test runner (default: false, only needed if your project has tests)

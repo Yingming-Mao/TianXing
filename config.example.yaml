@@ -21,8 +21,12 @@ tests:
   smoke_test_dir: "code/tests"
 
 review:
+  venue: ""                   # target venue (required for meaningful review)
+                              # e.g. "NeurIPS 2026", "ICML", "ACL", "CVPR", "Nature",
+                              # "IEEE TPAMI", "KDD", "CHI", "AAAI"
+                              # the reviewer prompt adapts scoring emphasis to the venue
   max_rounds: 3
-  target_score: 8.0
+  target_score: 7.0
   stop_on_plateau: 2          # stop after N consecutive rounds with no improvement
   stop_on_fail: 2             # stop after N consecutive validation failures
 

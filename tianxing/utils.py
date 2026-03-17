@@ -17,7 +17,7 @@ def load_config(path: Optional[str] = None) -> dict:
         "project": {"name": "paper", "paper_dir": "paper", "code_dir": "code", "results_dir": "results"},
         "compile": {"engine": "latexmk", "args": ["-pdf", "-interaction=nonstopmode"], "main_file": "paper/main.tex"},
         "tests": {"enabled": False, "command": "pytest", "args": ["-x", "--tb=short"], "smoke_test_dir": "code/tests"},
-        "review": {"max_rounds": 3, "target_score": 8.0, "stop_on_plateau": 2, "stop_on_fail": 2},
+        "review": {"venue": "", "max_rounds": 3, "target_score": 7.0, "stop_on_plateau": 2, "stop_on_fail": 2},
         "git": {"tag_prefix": "review-round-", "auto_checkpoint": True},
         "experiment_map": {"enabled": True, "auto_update": True, "file": "experiment_map.json"},
         "notification": {"method": "file"},
