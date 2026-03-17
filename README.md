@@ -2,9 +2,14 @@
 
 English | [中文](README_CN.md)
 
-Automated paper review and improvement tools for [Claude Code](https://claude.ai/claude-code). This is an **independent tool repository** — install it once, then use it across your paper projects.
+Automated paper review and improvement tools for [Claude Code](https://claude.ai/claude-code). Install once, use across all your paper projects.
 
-The system runs a Review → Plan → Modify → Validate → Record loop to iteratively improve your paper. Key focus: **removing AI-generated writing patterns** and improving narrative quality.
+### Why TianXing?
+
+- **Venue-calibrated review** — scoring adapts to your target venue's actual standards (auto-fetched from the web). Works for ML conferences, OR journals, energy/power systems, and more.
+- **Substance over polish** — technical soundness and novelty carry 45% of the score weight. Surface-level text fixes alone won't inflate your rating.
+- **Experiment-aware** — auto-built knowledge graph maps paper sections ↔ code ↔ tests ↔ results. When a table is weak, the agent traces it back to the code that produced it.
+- **Safe by default** — git checkpoints before every round, automatic rollback on failure, risk-tiered modifications.
 
 ## Installation
 
@@ -27,20 +32,27 @@ This creates the required directory structure, copies config templates, and conf
 
 ### 2. Configure
 
-Edit `config.yaml` in your paper project to match your setup:
+Edit `config.yaml` in your paper project:
 
 ```yaml
+review:
+  venue: "NeurIPS 2026"        # your target venue — the reviewer calibrates to its standards
+  # venue: "Applied Energy"    # energy/power systems
+  # venue: "Operations Research"  # OR/management science
+  # venue: "IEEE TSG"          # smart grid / power systems
+  # if left empty, the agent reads your paper and infers the best-fit venue
+
 compile:
   main_file: "paper/main.tex"
 
-# If your experiments run in a separate environment, specify it here:
+# If your experiments run in a separate environment:
 project:
   env: "myenv"                # conda env name
   # env: "/path/to/envs/myenv"       # or conda env path
   # env: "/path/to/venv/bin/python"  # or virtualenv python path
 ```
 
-TianXing itself can be installed anywhere — when it needs to run your experiment code or tests, it will automatically execute them in the specified environment. Leave `env` empty or omit it to use the current environment.
+TianXing itself can be installed anywhere — when it needs to run your experiment code or tests, it will automatically execute them in the specified environment. Leave `env` empty to use the current environment.
 
 ### 3. Run the review loop
 
@@ -101,7 +113,7 @@ Each review round:
 
 1. **Checkpoint** — tags the current git state
 2. **Experiment Map** — discover or update paper↔code↔test↔result mappings
-3. **Review** — analyzes paper for clarity, narrative, experimental design, AI flavor, readability
+3. **Review** — venue-calibrated scoring across 7 dimensions (technical soundness, novelty, clarity, experimental design, narrative, AI flavor, readability)
 4. **Plan** — prioritizes improvements by impact/risk ratio; uses the map to find all affected files
 5. **Modify** — applies changes (low-risk batched, high-risk isolated)
 6. **Validate** — compiles paper; uses the map to run only related tests; rolls back on failure
@@ -113,7 +125,7 @@ The loop stops when: target score is reached, max rounds exceeded, score plateau
 
 See `config.example.yaml` for all options. Key settings:
 
-- `review.venue` — target venue (e.g. `"NeurIPS 2026"`, `"IEEE TPAMI"`, `"CHI"`). The reviewer adapts scoring to venue standards. If empty, the agent infers the best-fit venue from the paper content.
+- `review.venue` — target venue (e.g. `"NeurIPS 2026"`, `"Applied Energy"`, `"Operations Research"`, `"IEEE TSG"`). The reviewer adapts scoring to venue standards. If empty, the agent infers from paper content.
 - `project.env` — experiment runtime environment: conda env name (`"myenv"`), conda env path, or virtualenv python path (default: current environment)
 - `review.max_rounds` — maximum improvement rounds (default: 3)
 - `review.target_score` — stop when this score is reached (default: 7.0)

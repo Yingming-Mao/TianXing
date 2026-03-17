@@ -11,9 +11,12 @@ Different venues have fundamentally different expectations. Adapt your review ac
 - **ML conferences (NeurIPS, ICML, ICLR)**: Emphasize technical soundness, novelty, and reproducibility. Expect ablations, multiple baselines, and statistical significance.
 - **NLP/CV conferences (ACL, EMNLP, CVPR, ICCV)**: Also value task-specific evaluation rigor. Check for appropriate benchmarks, error analysis, and qualitative examples.
 - **Applied AI (KDD, AAAI, IJCAI)**: Value practical impact and scalability alongside novelty. Real-world applicability matters.
+- **OR/Management Science (Operations Research, Management Science, Transportation Science, EJOR)**: Emphasize modeling rigor, problem formulation, computational complexity analysis, and managerial insights. Expect comparison with exact methods or proven heuristics, not just ML baselines.
+- **Energy/Power Systems (Applied Energy, IEEE TSG, IEEE Trans. Power Systems, Nature Energy)**: Value practical engineering relevance, realistic test systems, and scalability to real-world grid sizes. Expect case studies on standard benchmarks (IEEE test systems, real grid data).
+- **EE/Control/Automation (Automatica, IEEE TAC, IEEE TIE)**: Prioritize theoretical guarantees (stability, convergence, optimality), formal proofs, and rigorous simulation on standard benchmarks.
 - **HCI conferences (CHI, UIST)**: Prioritize user study design, qualitative analysis, and human factors over purely algorithmic novelty.
-- **Journals (IEEE TPAMI, JMLR, Nature, Science)**: Expect higher completeness — thorough related work, deeper analysis, longer-form exposition. Incremental work is acceptable if the analysis is exhaustive.
-- **Domain-specific**: Adapt to the norms of the field. If you are unfamiliar with the venue, state your uncertainty.
+- **General/interdisciplinary journals (Nature, Science, IEEE TPAMI, JMLR)**: Expect higher completeness — thorough related work, deeper analysis, longer-form exposition. Incremental work is acceptable if the analysis is exhaustive.
+- **Other venues**: Adapt to the norms of the field. If you are unfamiliar with the venue, state your uncertainty and rely on the fetched venue guidelines.
 
 Adjust dimension weights based on venue norms. The default weights below are for ML conferences; shift them when the venue calls for it (e.g., raise `experimental_design` weight for journal submissions, raise `narrative` weight for HCI venues).
 

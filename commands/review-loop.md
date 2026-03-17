@@ -10,6 +10,16 @@ Follow these steps in order. If any step fails, handle according to the failure 
 
 ### 1. Pre-check
 
+Read `config.yaml` and check `review.venue`. If it is empty, **prominently remind the user**:
+
+> ⚠ `review.venue` 未设置。建议在 `config.yaml` 中指定目标期刊/会议，例如：
+> `"NeurIPS 2026"`, `"ICML"`, `"ACL"`, `"CVPR"`, `"IEEE TPAMI"`,
+> `"Applied Energy"`, `"IEEE TSG"`, `"Transportation Science"`,
+> `"Operations Research"`, `"Management Science"`, `"CHI"`, `"Nature Energy"` 等。
+> 未设置时将从论文内容自动推断，但精度不如手动指定。
+
+Then proceed (do not block).
+
 ```bash
 python -m tianxing.compile_paper
 ```

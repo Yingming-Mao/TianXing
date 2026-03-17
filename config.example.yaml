@@ -21,10 +21,14 @@ tests:
   smoke_test_dir: "code/tests"
 
 review:
-  venue: ""                   # target venue (required for meaningful review)
-                              # e.g. "NeurIPS 2026", "ICML", "ACL", "CVPR", "Nature",
-                              # "IEEE TPAMI", "KDD", "CHI", "AAAI"
-                              # the reviewer prompt adapts scoring emphasis to the venue
+  venue: ""                   # target venue (recommended; auto-inferred if empty)
+                              # AI/ML: "NeurIPS 2026", "ICML", "ICLR", "ACL", "CVPR", "AAAI"
+                              # OR/Management: "Operations Research", "Management Science",
+                              #   "Transportation Science", "EJOR"
+                              # Energy/Power: "Applied Energy", "IEEE TSG",
+                              #   "IEEE Trans. Power Systems", "Nature Energy"
+                              # EE/Control: "Automatica", "IEEE TAC", "IEEE TIE"
+                              # General: "Nature", "Science", "IEEE TPAMI", "KDD", "CHI"
   max_rounds: 3
   target_score: 7.0
   stop_on_plateau: 2          # stop after N consecutive rounds with no improvement
