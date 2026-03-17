@@ -10,6 +10,7 @@ compile:
   main_file: "paper/main.tex"
 
 tests:
+  enabled: false                # set to true if your project has tests; only runs when code files are modified
   command: "pytest"
   args: ["-x", "--tb=short"]
   smoke_test_dir: "code/tests"
@@ -19,6 +20,11 @@ review:
   target_score: 8.0
   stop_on_plateau: 2          # stop after N consecutive rounds with no improvement
   stop_on_fail: 2             # stop after N consecutive validation failures
+
+experiment_map:
+  enabled: true                  # auto-discover and maintain paper↔code↔test↔result mappings
+  auto_update: true              # re-scan and merge new entries between rounds
+  file: "experiment_map.json"    # map file location (editable by user)
 
 git:
   tag_prefix: "review-round-"

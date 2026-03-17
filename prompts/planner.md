@@ -46,6 +46,7 @@ Output a JSON object:
 5. **Respect dependencies**: If action B depends on action A, they must be in separate sequential batches.
 6. **Cap per round**: No more than 10 actions per round to keep changes reviewable.
 7. **Skip diminishing returns**: If the review score is already 8+, only plan actions with clear value-add.
+8. **Use the experiment map**: When planning actions on experiments or results, query the map to find all related files (code, tests, result files, paper sections) and include them in `target_files`. This ensures the plan accounts for downstream effects — e.g., modifying experiment code also requires updating the paper sections that display those results.
 
 ## Priority Classification
 

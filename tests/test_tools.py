@@ -1,4 +1,4 @@
-"""Integration tests for paper_review_tools CLI modules."""
+"""Integration tests for tianxing CLI modules."""
 
 import json
 import os
@@ -10,8 +10,8 @@ import pytest
 
 
 def run_module(module: str, args: list[str], cwd: str = None) -> tuple[int, dict]:
-    """Run a paper_review_tools module and parse JSON output."""
-    cmd = ["python", "-m", f"paper_review_tools.{module}"] + args
+    """Run a tianxing module and parse JSON output."""
+    cmd = ["python", "-m", f"tianxing.{module}"] + args
     r = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
     try:
         data = json.loads(r.stdout)

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Setup a paper project to use paper-review-tools
-# Usage: bash /path/to/paper-review-tools/scripts/setup_project.sh
+# Setup a paper project to use TianXing
+# Usage: bash /path/to/TianXing/scripts/setup_project.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOOLS_ROOT="$(dirname "$SCRIPT_DIR")"
 PROJECT_DIR="$(pwd)"
 
-echo "=== Paper Review Tools — Project Setup ==="
+echo "=== TianXing — Project Setup ==="
 echo "Project directory: $PROJECT_DIR"
 echo "Tools source: $TOOLS_ROOT"
 echo ""
@@ -60,14 +60,29 @@ fi
 if [ -f .gitignore ]; then
     if ! grep -q "logs/" .gitignore 2>/dev/null; then
         echo "" >> .gitignore
-        echo "# Paper review tools" >> .gitignore
+        echo "# TianXing" >> .gitignore
         echo "logs/" >> .gitignore
         echo "  ✓ Added logs/ to .gitignore"
     fi
 else
-    echo "# Paper review tools" > .gitignore
+    echo "# TianXing" > .gitignore
     echo "logs/" >> .gitignore
     echo "  ✓ Created .gitignore with logs/"
+fi
+
+# Generate experiment map
+if command -v python &> /dev/null && python -c "import tianxing" 2>/dev/null; then
+    if [ ! -f experiment_map.json ]; then
+        if python -m tianxing.experiment_map --action discover > /dev/null 2>&1; then
+            echo "  ✓ Generated experiment_map.json"
+        else
+            echo "  • Skipped experiment_map.json (will be generated on first /review-loop run)"
+        fi
+    else
+        echo "  • experiment_map.json already exists, skipping"
+    fi
+else
+    echo "  • Skipped experiment_map.json (install TianXing first, then run: tianxing map --action discover)"
 fi
 
 echo ""
@@ -75,6 +90,7 @@ echo "=== Setup complete! ==="
 echo ""
 echo "Next steps:"
 echo "  1. Edit config.yaml to match your project structure"
-echo "  2. Make sure paper-review-tools is installed: pip install -e $TOOLS_ROOT"
+echo "  2. Make sure TianXing is installed: pip install -e $TOOLS_ROOT"
 echo "  3. Run Claude Code and use: /review-loop"
+echo "     (experiment_map.json will be auto-generated on first run)"
 echo ""

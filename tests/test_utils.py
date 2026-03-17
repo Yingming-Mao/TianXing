@@ -1,4 +1,4 @@
-"""Tests for paper_review_tools.utils."""
+"""Tests for tianxing.utils."""
 
 import json
 import os
@@ -9,7 +9,7 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from paper_review_tools.utils import (
+from tianxing.utils import (
     _deep_merge,
     ensure_dirs,
     find_config,
@@ -83,6 +83,6 @@ def test_find_config():
         config_path.write_text("project:\n  name: test\n")
         subdir = Path(tmpdir) / "sub" / "deep"
         subdir.mkdir(parents=True)
-        with patch("paper_review_tools.utils.Path.cwd", return_value=subdir):
+        with patch("tianxing.utils.Path.cwd", return_value=subdir):
             found = find_config()
             assert found == config_path

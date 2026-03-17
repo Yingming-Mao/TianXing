@@ -34,6 +34,11 @@ def main():
 
     cfg = load_config(args.config)
     test_cfg = cfg["tests"]
+
+    if not test_cfg.get("enabled", False):
+        json_result(True, skipped=True, message="Tests disabled in config (tests.enabled: false)")
+        return
+
     command = test_cfg["command"]
     test_args = test_cfg.get("args", [])
 

@@ -1,4 +1,4 @@
-# Paper Review Tools
+# TianXing（天行）
 
 [English](README.md) | 中文
 
@@ -10,7 +10,7 @@
 
 ```bash
 git clone https://github.com/Yingming-Mao/TianXing.git
-cd paper-review-tools
+cd TianXing
 pip install -e .
 ```
 
@@ -20,7 +20,7 @@ pip install -e .
 
 ```bash
 cd /path/to/your-paper-project
-bash /path/to/paper-review-tools/scripts/setup_project.sh
+bash /path/to/TianXing/scripts/setup_project.sh
 ```
 
 脚本会自动创建所需的目录结构并复制配置模板。
@@ -32,9 +32,6 @@ bash /path/to/paper-review-tools/scripts/setup_project.sh
 ```yaml
 compile:
   main_file: "paper/main.tex"
-tests:
-  command: "pytest"
-  smoke_test_dir: "code/tests"
 ```
 
 ### 3. 运行 Review 循环
@@ -47,25 +44,26 @@ tests:
 
 ## 工具列表
 
-所有工具输出结构化 JSON，通过 `python -m paper_review_tools.<模块名>` 调用。
+所有工具输出结构化 JSON，通过 `python -m tianxing.<模块名>` 调用。
 
 | 工具 | 用途 |
 |------|------|
 | `checkpoint_repo` | 修改前创建 git 检查点（tag） |
 | `rollback_repo` | 回滚到之前的检查点 |
 | `compile_paper` | 编译 LaTeX 并报告错误/警告 |
-| `run_tests` | 运行项目测试 |
+| `run_tests` | 运行项目测试（仅在代码被修改且测试已启用时运行） |
 | `record_round` | 保存审稿产物（review、plan、changes） |
 | `update_status` | 跟踪审稿进度和分数 |
 | `notify_status` | 记录通知日志 |
 | `collect_metrics` | 扫描 results 目录收集指标 |
+| `experiment_map` | 自动发现和查询 论文↔代码↔测试↔结果 的双向映射 |
 
-也可以使用 CLI 入口：`paper-review-tools <命令> [参数]`
+也可以使用 CLI 入口：`tianxing <命令> [参数]`
 
 ## 仓库结构
 
 ```
-paper_review_tools/     Python 包（可 pip 安装）
+tianxing/     Python 包（可 pip 安装）
 commands/               Claude Code slash command
 skills/                 详细的 Skill prompt
 prompts/                子 Agent prompt 模板（reviewer、planner、rewriter、summarizer）
@@ -82,6 +80,7 @@ tests/                  工具自身的测试
 my-paper-project/
 ├── AGENT.md                 # Agent 行为规则
 ├── config.yaml              # 项目配置
+├── experiment_map.json      # 实验知识图谱（自动生成，可手动编辑）
 ├── .claude/commands/
 │   └── review-loop.md       # Slash command
 ├── paper/                   # LaTeX 源文件
@@ -92,16 +91,33 @@ my-paper-project/
 └── status/                  # 审稿进度追踪
 ```
 
+## 实验知识图谱（Experiment Map）
+
+TianXing 会自动构建并维护 `experiment_map.json`，双向映射：
+
+- **论文章节**（section、table、figure）↔ **代码文件**
+- **代码文件** ↔ **测试命令**
+- **代码文件** ↔ **结果文件**（数据、图表）
+
+这意味着：review 发现某个表格结果不够 convincing → 顺着映射找到对应代码 → 改完代码知道跑哪个测试 → 也知道论文哪些段落需要同步更新。映射由扫描项目自动生成，每轮更新，也支持手动编辑。
+
+```bash
+tianxing map --action discover   # 扫描并生成
+tianxing map --action query --id "tab:results"   # 查找关联代码/测试
+tianxing map --action query --path "code/train.py"  # 查找关联测试/论文章节
+```
+
 ## 工作原理
 
 每一轮 Review 包含以下步骤：
 
 1. **Checkpoint** — 给当前 git 状态打 tag，确保可回滚
-2. **Review** — 从五个维度分析论文：清晰度、叙事逻辑、实验设计、AI 味、可读性
-3. **Plan** — 按影响/风险比排序，生成优先级行动计划
-4. **Modify** — 执行修改（低风险批量执行，高风险逐个处理）
-5. **Validate** — 编译论文 + 运行测试；失败则回滚
-6. **Record** — 保存产物、更新分数、检查停止条件
+2. **Experiment Map** — 发现或更新 论文↔代码↔测试↔结果 映射
+3. **Review** — 从五个维度分析论文：清晰度、叙事逻辑、实验设计、AI 味、可读性
+4. **Plan** — 按影响/风险比排序，生成优先级行动计划；通过映射找到所有受影响文件
+5. **Modify** — 执行修改（低风险批量执行，高风险逐个处理）
+6. **Validate** — 编译论文；通过映射只跑关联测试；失败则回滚
+7. **Record** — 保存产物、更新分数、检查停止条件
 
 ### 停止条件
 
@@ -137,7 +153,10 @@ my-paper-project/
 | `review.stop_on_fail` | 连续 N 次验证失败则停 | 2 |
 | `compile.main_file` | LaTeX 主文件路径 | `paper/main.tex` |
 | `compile.engine` | 编译引擎 | `latexmk` |
+| `tests.enabled` | 启用测试（仅在有实验代码时需要开启） | `false` |
 | `tests.command` | 测试命令 | `pytest` |
+| `experiment_map.enabled` | 启用实验知识图谱 | `true` |
+| `experiment_map.auto_update` | 每轮自动更新映射 | `true` |
 | `git.auto_checkpoint` | 自动提交并打 tag | `true` |
 | `notification.method` | 通知方式（V1 仅支持 file） | `file` |
 

@@ -8,6 +8,7 @@ You will be given:
 1. The full LaTeX source of the paper
 2. The experiment code (if available)
 3. Results/figures (if available)
+4. The experiment map (`experiment_map.json`) linking paper sections to code and results (if available)
 
 ## Output Format
 
@@ -95,3 +96,4 @@ Scan specifically for:
 3. **Prioritize impact**: Focus on issues that most affect the paper's acceptance probability.
 4. **Check consistency**: Verify that claims in the abstract/intro match actual results.
 5. **Evaluate code-paper alignment**: If code is available, check that described methods match implementation.
+6. **Use the experiment map**: When noting issues with specific tables/figures, reference the map entity ID (e.g. `tab:results`, `fig:ablation`) in the issue's `location` field. This enables downstream tools to find the responsible code.

@@ -9,17 +9,29 @@ Follow these steps in order. If any step fails, handle according to the failure 
 ### 1. Pre-check
 
 ```bash
-python -m paper_review_tools.compile_paper
+python -m tianxing.compile_paper
 ```
 
 If compilation fails, stop and report. The paper must compile before review begins.
 
 Check git status — the repo must be a git repository.
 
+### 1b. Experiment Map
+
+If `experiment_map.enabled` is true in config, discover or update the experiment map:
+
+```bash
+python -m tianxing.experiment_map --action discover
+```
+
+This scans the project and builds a bidirectional mapping between paper sections, code files, test commands, and result files. If `experiment_map.json` already exists, new entries are merged without removing user-added ones.
+
+Read the map and keep it available for the rest of the loop — it tells you which code produces which tables/figures, which tests verify which code, and which paper sections need updating when code changes.
+
 ### 2. Read Current Status
 
 ```bash
-python -m paper_review_tools.update_status --round 0 --phase init --message "Starting review loop"
+python -m tianxing.update_status --round 0 --phase init --message "Starting review loop"
 ```
 
 If `status/current.json` exists, read it to determine the current round number. Otherwise start at round 1.
@@ -29,25 +41,25 @@ If `status/current.json` exists, read it to determine the current round number. 
 #### 3a. Checkpoint
 
 ```bash
-python -m paper_review_tools.checkpoint_repo --round N
+python -m tianxing.checkpoint_repo --round N
 ```
 
 #### 3b. Review
 
-Read the full paper source and any experiment code. Produce a structured review following the guidelines in the `prompts/reviewer.md` prompt template from the paper-review-tools package.
+Read the full paper source and any experiment code. **Use the experiment map** to understand which code files produce which tables/figures/results. Produce a structured review following the guidelines in the `prompts/reviewer.md` prompt template from the TianXing package. When flagging issues with specific tables or figures, include the map entity ID (e.g. `tab:results`) in the issue's `location` field.
 
 Save the review:
 ```bash
-python -m paper_review_tools.record_round --round N --type review --content-file /tmp/review.json
+python -m tianxing.record_round --round N --type review --content-file /tmp/review.json
 ```
 
 #### 3c. Plan
 
-Based on the review, create an action plan following `prompts/planner.md`.
+Based on the review, create an action plan following `prompts/planner.md`. **Use the experiment map** to populate `target_files` — when a review issue targets a table/figure, query the map to find the code that produces it, related tests, and result files.
 
 Save the plan:
 ```bash
-python -m paper_review_tools.record_round --round N --type plan --content-file /tmp/plan.json
+python -m tianxing.record_round --round N --type plan --content-file /tmp/plan.json
 ```
 
 #### 3d. Execute Changes
@@ -62,8 +74,16 @@ For each batch:
 #### 3e. Validate
 
 ```bash
-python -m paper_review_tools.compile_paper
-python -m paper_review_tools.run_tests
+python -m tianxing.compile_paper
+```
+
+Only run tests if code files were modified in this round. Use the experiment map to find which specific tests to run for the modified files:
+```bash
+python -m tianxing.experiment_map --action query --path "path/to/modified/file.py"
+```
+Then run only the related test commands. If no map entry exists, fall back to the global test command (if `tests.enabled` is true):
+```bash
+python -m tianxing.run_tests
 ```
 
 **If validation fails:**
@@ -71,24 +91,24 @@ python -m paper_review_tools.run_tests
 2. Re-validate
 3. If still failing: rollback and stop this round
    ```bash
-   python -m paper_review_tools.rollback_repo --target review-round-N-start
+   python -m tianxing.rollback_repo --target review-round-N-start
    ```
 
 #### 3f. Record
 
 Save a changes summary:
 ```bash
-python -m paper_review_tools.record_round --round N --type changes --content-file /tmp/changes.md
+python -m tianxing.record_round --round N --type changes --content-file /tmp/changes.md
 ```
 
 Update status with the new score:
 ```bash
-python -m paper_review_tools.update_status --round N --phase complete --score X.X
+python -m tianxing.update_status --round N --phase complete --score X.X
 ```
 
 Notify:
 ```bash
-python -m paper_review_tools.notify_status --level success --message "Round N complete, score: X.X" --round N
+python -m tianxing.notify_status --level success --message "Round N complete, score: X.X" --round N
 ```
 
 #### 3g. Continue or Stop?
@@ -105,8 +125,8 @@ If none triggered, proceed to round N+1.
 
 Produce a final summary following `prompts/summarizer.md` and save:
 ```bash
-python -m paper_review_tools.record_round --round N --type validation --content-file /tmp/summary.md
-python -m paper_review_tools.notify_status --level info --message "Review loop complete after N rounds"
+python -m tianxing.record_round --round N --type validation --content-file /tmp/summary.md
+python -m tianxing.notify_status --level info --message "Review loop complete after N rounds"
 ```
 
 Report the final status to the user.
