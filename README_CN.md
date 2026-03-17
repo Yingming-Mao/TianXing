@@ -32,7 +32,15 @@ bash /path/to/TianXing/scripts/setup_project.sh
 ```yaml
 compile:
   main_file: "paper/main.tex"
+
+# 如果你的实验代码运行在单独的环境中，在这里指定：
+project:
+  env: "myenv"                # conda 环境名
+  # env: "/path/to/envs/myenv"       # 或 conda 环境路径
+  # env: "/path/to/venv/bin/python"  # 或 virtualenv 的 python 路径
 ```
+
+TianXing 本身可以装在任何地方——当需要运行你的实验代码或测试时，会自动在指定环境中执行。不填或留空则使用当前环境。
 
 ### 3. 运行 Review 循环
 

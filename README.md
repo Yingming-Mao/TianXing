@@ -32,7 +32,15 @@ Edit `config.yaml` in your paper project to match your setup:
 ```yaml
 compile:
   main_file: "paper/main.tex"
+
+# If your experiments run in a separate environment, specify it here:
+project:
+  env: "myenv"                # conda env name
+  # env: "/path/to/envs/myenv"       # or conda env path
+  # env: "/path/to/venv/bin/python"  # or virtualenv python path
 ```
+
+TianXing itself can be installed anywhere — when it needs to run your experiment code or tests, it will automatically execute them in the specified environment. Leave `env` empty or omit it to use the current environment.
 
 ### 3. Run the review loop
 
