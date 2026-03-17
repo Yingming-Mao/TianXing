@@ -28,15 +28,21 @@ def main():
     compile_cfg = cfg["compile"]
     main_file = compile_cfg["main_file"]
 
-    if not Path(main_file).exists():
+    main_path = Path(main_file)
+    if not main_path.exists():
         json_result(False, error=f"Main file not found: {main_file}")
+
+    # Compile in the directory containing the .tex file so that
+    # relative paths (\includegraphics{figs/...}) resolve correctly
+    tex_dir = str(main_path.parent) if main_path.parent != Path(".") else None
+    tex_filename = main_path.name
 
     engine = compile_cfg["engine"]
     cmd_args = compile_cfg.get("args", ["-pdf", "-interaction=nonstopmode"])
-    cmd = [engine] + cmd_args + [main_file]
+    cmd = [engine] + cmd_args + [tex_filename]
 
-    # Run compilation
-    code, stdout, stderr = run_cmd(cmd, timeout=120)
+    # Run compilation in the tex file's directory
+    code, stdout, stderr = run_cmd(cmd, cwd=tex_dir, timeout=120)
 
     # Save log
     timestamp = iso_now().replace(":", "-")
@@ -49,15 +55,17 @@ def main():
     combined = stdout + "\n" + stderr
     errors, warnings = parse_latex_log(combined)
 
-    pdf_path = main_file.replace(".tex", ".pdf")
-    if not Path(pdf_path).exists():
+    pdf_path = main_path.with_suffix(".pdf")
+    if not pdf_path.exists():
         pdf_path = ""
+    else:
+        pdf_path = str(pdf_path)
 
     json_result(
         code == 0,
         errors=errors,
         warnings=warnings,
-        pdf_path=pdf_path if Path(pdf_path).exists() else "",
+        pdf_path=pdf_path,
         log_file=log_file,
     )
 
