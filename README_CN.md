@@ -1,0 +1,153 @@
+# Paper Review Tools
+
+[English](README.md) | 中文
+
+自动化论文审稿与改进工具，基于 [Claude Code](https://claude.ai/claude-code) 构建。这是一个**独立的工具仓库**——安装一次，即可在你的所有论文项目中使用。
+
+系统运行 Review → Plan → Modify → Validate → Record 循环，迭代式提升论文质量。核心目标：**去除 AI 生成痕迹**，优化叙事逻辑和实验设计。
+
+## 安装
+
+```bash
+git clone https://github.com/yourname/paper-review-tools.git
+cd paper-review-tools
+pip install -e .
+```
+
+## 快速开始
+
+### 1. 初始化你的论文项目
+
+```bash
+cd /path/to/your-paper-project
+bash /path/to/paper-review-tools/scripts/setup_project.sh
+```
+
+脚本会自动创建所需的目录结构并复制配置模板。
+
+### 2. 配置
+
+编辑论文项目中的 `config.yaml`，适配你的项目：
+
+```yaml
+compile:
+  main_file: "paper/main.tex"
+tests:
+  command: "pytest"
+  smoke_test_dir: "code/tests"
+```
+
+### 3. 运行 Review 循环
+
+在论文项目中打开 Claude Code，执行：
+
+```
+/review-loop
+```
+
+## 工具列表
+
+所有工具输出结构化 JSON，通过 `python -m paper_review_tools.<模块名>` 调用。
+
+| 工具 | 用途 |
+|------|------|
+| `checkpoint_repo` | 修改前创建 git 检查点（tag） |
+| `rollback_repo` | 回滚到之前的检查点 |
+| `compile_paper` | 编译 LaTeX 并报告错误/警告 |
+| `run_tests` | 运行项目测试 |
+| `record_round` | 保存审稿产物（review、plan、changes） |
+| `update_status` | 跟踪审稿进度和分数 |
+| `notify_status` | 记录通知日志 |
+| `collect_metrics` | 扫描 results 目录收集指标 |
+
+也可以使用 CLI 入口：`paper-review-tools <命令> [参数]`
+
+## 仓库结构
+
+```
+paper_review_tools/     Python 包（可 pip 安装）
+commands/               Claude Code slash command
+skills/                 详细的 Skill prompt
+prompts/                子 Agent prompt 模板（reviewer、planner、rewriter、summarizer）
+templates/              用户项目模板文件（AGENT.md、.gitignore）
+scripts/                项目初始化脚本
+tests/                  工具自身的测试
+```
+
+## 用户项目使用后的结构
+
+运行 `setup_project.sh` 后，你的论文项目会变成：
+
+```
+my-paper-project/
+├── AGENT.md                 # Agent 行为规则
+├── config.yaml              # 项目配置
+├── .claude/commands/
+│   └── review-loop.md       # Slash command
+├── paper/                   # LaTeX 源文件
+├── code/                    # 实验代码
+├── results/                 # 实验结果
+├── reviews/                 # 自动生成的审稿记录
+├── logs/                    # 编译和测试日志
+└── status/                  # 审稿进度追踪
+```
+
+## 工作原理
+
+每一轮 Review 包含以下步骤：
+
+1. **Checkpoint** — 给当前 git 状态打 tag，确保可回滚
+2. **Review** — 从五个维度分析论文：清晰度、叙事逻辑、实验设计、AI 味、可读性
+3. **Plan** — 按影响/风险比排序，生成优先级行动计划
+4. **Modify** — 执行修改（低风险批量执行，高风险逐个处理）
+5. **Validate** — 编译论文 + 运行测试；失败则回滚
+6. **Record** — 保存产物、更新分数、检查停止条件
+
+### 停止条件
+
+循环在以下任一条件满足时停止：
+- 达到目标分数（`review.target_score`，默认 8.0）
+- 超过最大轮数（`review.max_rounds`，默认 3）
+- 分数连续无提升（`review.stop_on_plateau` 轮）
+- 连续验证失败（`review.stop_on_fail` 次）
+
+## 去 AI 味策略
+
+这是本工具的核心差异化功能。系统内置 50+ 条 AI 写作反模式检测规则，包括：
+
+| 类别 | 示例 |
+|------|------|
+| 空洞套话 | "It is worth noting that..." → 直接陈述事实 |
+| 过度声称 | "groundbreaking" → 用具体数据说话 |
+| 模糊量词 | "significantly" → 仅在有统计显著性时使用 |
+| 机械过渡 | "Furthermore... Moreover..." → 变化句式 |
+| 被动过度 | "It can be observed that" → "We observe" |
+
+详细规则见 `prompts/rewriter.md`。
+
+## 配置说明
+
+完整配置见 `config.example.yaml`，关键设置：
+
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `review.max_rounds` | 最大改进轮数 | 3 |
+| `review.target_score` | 目标分数（达到即停） | 8.0 |
+| `review.stop_on_plateau` | 连续 N 轮无提升则停 | 2 |
+| `review.stop_on_fail` | 连续 N 次验证失败则停 | 2 |
+| `compile.main_file` | LaTeX 主文件路径 | `paper/main.tex` |
+| `compile.engine` | 编译引擎 | `latexmk` |
+| `tests.command` | 测试命令 | `pytest` |
+| `git.auto_checkpoint` | 自动提交并打 tag | `true` |
+| `notification.method` | 通知方式（V1 仅支持 file） | `file` |
+
+## 安全机制
+
+- 每轮修改前自动创建 git tag 检查点
+- 编译或测试失败时，尝试修复一次，仍失败则自动回滚
+- 修改按风险分级：低风险自动执行，高风险需确认
+- 所有操作产物完整记录在 `reviews/` 和 `logs/` 中
+
+## License
+
+MIT

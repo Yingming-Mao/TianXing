@@ -1,5 +1,7 @@
 # Paper Review Tools
 
+English | [中文](README_CN.md)
+
 Automated paper review and improvement tools for [Claude Code](https://claude.ai/claude-code). This is an **independent tool repository** — install it once, then use it across your paper projects.
 
 The system runs a Review → Plan → Modify → Validate → Record loop to iteratively improve your paper. Key focus: **removing AI-generated writing patterns** and improving narrative quality.
