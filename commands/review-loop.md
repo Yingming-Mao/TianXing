@@ -46,16 +46,21 @@ If `status/current.json` exists, read it to determine the current round number. 
 python -m tianxing.checkpoint_repo --round N
 ```
 
-#### 3b. Fetch Venue Guidelines (round 1 only)
+#### 3b. Determine Target Venue & Fetch Guidelines (round 1 only)
 
-Read `review.venue` from `config.yaml`. **If venue is empty, stop the loop and ask the user to set it** — reviewing without a target venue produces meaningless scores.
+Read `review.venue` from `config.yaml`.
 
-On the first round, use WebSearch to find the target venue's official reviewer guidelines and call for papers. Search queries like:
+- **If venue is set**: use it directly.
+- **If venue is empty**: read the paper's title, abstract, introduction, and related work. Based on the research field, methodology, and contribution scope, infer the most appropriate target venue. Report your inference to the user (e.g. "No venue configured. Based on the paper's focus on X, I'm calibrating to Y standards.") and proceed.
+
+Once the venue is determined, use WebSearch to find its official reviewer guidelines and call for papers. Search queries like:
+
 - `"{venue name}" reviewer guidelines {year}`
 - `"{venue name}" call for papers {year}`
 - `"{venue name}" review criteria`
 
 Use WebFetch to read the most relevant results. Extract and save the key review criteria to `/tmp/venue_guidelines.md` so they are available for all rounds. This file should contain:
+
 - The venue's stated evaluation criteria and their relative importance
 - Any specific requirements (page limits, formatting, blind review rules)
 - What the venue considers grounds for acceptance vs rejection
