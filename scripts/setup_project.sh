@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Setup a paper project to use paper-review-tools
+# Usage: bash /path/to/paper-review-tools/scripts/setup_project.sh
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TOOLS_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(pwd)"
+
+echo "=== Paper Review Tools — Project Setup ==="
+echo "Project directory: $PROJECT_DIR"
+echo "Tools source: $TOOLS_ROOT"
+echo ""
+
+# Check we're in a git repo
+if ! git rev-parse --git-dir > /dev/null 2>&1; then
+    echo "ERROR: Not a git repository. Please run 'git init' first."
+    exit 1
+fi
+
+# Create directories
+echo "Creating directories..."
+mkdir -p reviews logs/latex logs/tests logs/notifications status
+mkdir -p .claude/commands
+
+# Copy AGENT.md
+if [ ! -f AGENT.md ]; then
+    cp "$TOOLS_ROOT/templates/AGENT.md" AGENT.md
+    echo "  ✓ Created AGENT.md"
+else
+    echo "  • AGENT.md already exists, skipping"
+fi
+
+# Copy config.yaml
+if [ ! -f config.yaml ]; then
+    cp "$TOOLS_ROOT/config.example.yaml" config.yaml
+    echo "  ✓ Created config.yaml"
+else
+    echo "  • config.yaml already exists, skipping"
+fi
+
+# Copy slash command
+if [ ! -f .claude/commands/review-loop.md ]; then
+    cp "$TOOLS_ROOT/commands/review-loop.md" .claude/commands/review-loop.md
+    echo "  ✓ Created .claude/commands/review-loop.md"
+else
+    echo "  • .claude/commands/review-loop.md already exists, skipping"
+fi
+
+# Initialize status
+if [ ! -f status/current.json ]; then
+    echo '{"round": 0, "phase": "init", "score": null, "message": "Not started", "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' > status/current.json
+    echo "  ✓ Initialized status/current.json"
+else
+    echo "  • status/current.json already exists, skipping"
+fi
+
+# Add to .gitignore if needed
+if [ -f .gitignore ]; then
+    if ! grep -q "logs/" .gitignore 2>/dev/null; then
+        echo "" >> .gitignore
+        echo "# Paper review tools" >> .gitignore
+        echo "logs/" >> .gitignore
+        echo "  ✓ Added logs/ to .gitignore"
+    fi
+else
+    echo "# Paper review tools" > .gitignore
+    echo "logs/" >> .gitignore
+    echo "  ✓ Created .gitignore with logs/"
+fi
+
+echo ""
+echo "=== Setup complete! ==="
+echo ""
+echo "Next steps:"
+echo "  1. Edit config.yaml to match your project structure"
+echo "  2. Make sure paper-review-tools is installed: pip install -e $TOOLS_ROOT"
+echo "  3. Run Claude Code and use: /review-loop"
+echo ""
