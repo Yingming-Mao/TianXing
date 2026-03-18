@@ -115,6 +115,8 @@ class RevisionLoop:
                 return "invoke_planner"
 
         if phase == "IMPLEMENT":
+            if status == "pending":
+                return "invoke_implementer"
             if status == "running":
                 return "wait"
             if status == "completed":
@@ -123,8 +125,11 @@ class RevisionLoop:
                 return "invoke_reflector"
 
         if phase == "SMOKE_TEST":
-            if status == "running":
-                return "wait"
+            if status in ("pending", "running"):
+                # Smoke tests are synchronous — "pending" means retry
+                # after reflector; "running" means crashed or stale.
+                # Either way, (re-)run the smoke test.
+                return "run_smoke_tests"
             if status == "completed":
                 # Check if full runs are needed
                 plan = read_json(self.revision_dir / "master_plan.json")
@@ -247,11 +252,21 @@ class RevisionLoop:
             log["result"] = result
 
         elif action == "invoke_reflector":
+            failed_phase = self.state.phase          # remember where we failed
             result = invoke_role("reflector", self.project_root, self.state, timeout=300)
-            # Reflector may recommend replan — check decision_state
+            # Act on reflector's recommendation
             decision = read_json(self.revision_dir / "decision_state.json")
-            if decision.get("chosen_action") == "replan":
+            chosen = decision.get("chosen_action", "")
+            if chosen == "replan":
                 self.state.transition("PLAN", "pending")
+            elif chosen == "rerun":
+                # Re-enter the failed phase so it gets retried
+                self.state.transition(failed_phase, "pending")
+            elif chosen == "escalate":
+                self.state.request_human(
+                    decision.get("why_chosen", "Reflector escalated"))
+            # "downgrade_claim" and others — don't change phase, let
+            # the loop re-evaluate on next iteration
             log["result"] = result
 
         elif action == "request_human_confirmation":

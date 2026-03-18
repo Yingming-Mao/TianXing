@@ -56,10 +56,13 @@ def invoke_role(
 
 
 def run_smoke_test(project_root: Path) -> dict[str, Any]:
-    """Run compilation and basic tests as a smoke test."""
-    results = {"compile": None, "test": None}
+    """Run compilation, syntax-check experiment scripts, and basic tests."""
+    import glob as globmod
 
-    # Compile
+    project_root = Path(project_root)
+    results: dict[str, Any] = {"compile": None, "experiment_syntax": None, "test": None}
+
+    # 1. Compile paper
     code, stdout, stderr = run_cmd(
         ["python", "-m", "tianxing.compile_paper"],
         cwd=str(project_root),
@@ -70,7 +73,30 @@ def run_smoke_test(project_root: Path) -> dict[str, Any]:
     if code != 0:
         return {"ok": False, "results": results, "failed_at": "compile"}
 
-    # Tests (if enabled)
+    # 2. Syntax-check experiment scripts (import without executing)
+    #    Find all run_experiment_*.py under the project
+    exp_scripts = sorted(globmod.glob(
+        str(project_root / "**" / "run_experiment_*.py"), recursive=True
+    ))
+    if exp_scripts:
+        failed_scripts = []
+        for script in exp_scripts:
+            code, stdout, stderr = run_cmd(
+                ["python", "-c", f"import ast; ast.parse(open('{script}').read())"],
+                cwd=str(project_root),
+                timeout=30,
+            )
+            if code != 0:
+                failed_scripts.append({"script": script, "stderr": stderr})
+        results["experiment_syntax"] = {
+            "ok": len(failed_scripts) == 0,
+            "checked": len(exp_scripts),
+            "failed": failed_scripts,
+        }
+        if failed_scripts:
+            return {"ok": False, "results": results, "failed_at": "experiment_syntax"}
+
+    # 3. Tests (if enabled)
     config = load_config()
     if config.get("tests", {}).get("enabled", False):
         code, stdout, stderr = run_cmd(
