@@ -253,7 +253,11 @@ def _infer_links(paper_sections: list, code_entries: list, test_entries: list,
         test_stem = Path(t["path"]).stem
         # test_foo → foo
         for prefix in ("test_", ""):
-            target_stem = test_stem.removeprefix("test_").removesuffix("_test")
+            target_stem = test_stem
+            if target_stem.startswith("test_"):
+                target_stem = target_stem[len("test_"):]
+            if target_stem.endswith("_test"):
+                target_stem = target_stem[:-len("_test")]
             if target_stem in code_by_stem:
                 _add(code_by_stem[target_stem], t["id"], "tested_by")
                 break
