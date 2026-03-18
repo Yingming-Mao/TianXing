@@ -21,19 +21,23 @@ from ..utils import get_package_root, iso_now
 # Role definitions — each maps to a prompt file, state files, and permissions
 # ---------------------------------------------------------------------------
 #
-# Permission paths use placeholders: {root} is resolved at invocation time
-# to the absolute project root.  This is critical because --allowedTools
-# in dontAsk mode requires paths that Claude Code can actually match.
-#
-# Bash patterns do NOT need {root} — they match on command text, not paths.
+# Claude Code's dontAsk mode + --allowedTools path globs are unreliable
+# (absolute paths don't match, relative paths don't match).
+# So we use UNSCOPED tool names (e.g. "Write", not "Write(path/**)")
+# and rely on the role prompt to constrain which files Claude touches.
+# The prompt explicitly lists "Files you MUST update" — that's the real
+# access control. dontAsk just blocks tools not in the list at all
+# (e.g. auditor has no Edit, so it can't edit source files).
 # ---------------------------------------------------------------------------
 
-_BASE_ALLOWED = [
-    "Read",                         # read any file
-    "Glob",                         # find files by pattern
-    "Grep",                         # search file contents
+# All roles can read
+_READ_TOOLS = [
+    "Read",
+    "Glob",
+    "Grep",
 ]
 
+# Safe bash commands — no destructive operations
 _BASH_SAFE = [
     "Bash(git diff *)",
     "Bash(git status *)",
@@ -42,6 +46,10 @@ _BASH_SAFE = [
     "Bash(python3 -m tianxing.*)",
     "Bash(ls *)",
     "Bash(cat *)",
+    "Bash(head *)",
+    "Bash(tail *)",
+    "Bash(wc *)",
+    "Bash(find *)",
 ]
 
 ROLES = {
@@ -59,9 +67,8 @@ ROLES = {
             "revision/observations.json",
         ],
         "allowed_tools": [
-            *_BASE_ALLOWED,
-            "Write({root}/revision/**)",
-            "Edit({root}/revision/**)",
+            *_READ_TOOLS,
+            "Write",                # writes state files only (prompt-constrained)
             *_BASH_SAFE,
         ],
     },
@@ -82,9 +89,8 @@ ROLES = {
             "revision/decision_state.json",
         ],
         "allowed_tools": [
-            *_BASE_ALLOWED,
-            "Write({root}/revision/**)",
-            "Edit({root}/revision/**)",
+            *_READ_TOOLS,
+            "Write",
             *_BASH_SAFE,
         ],
     },
@@ -103,13 +109,9 @@ ROLES = {
             "revision/result_registry.json",
         ],
         "allowed_tools": [
-            *_BASE_ALLOWED,
-            "Write({root}/revision/**)",
-            "Edit({root}/revision/**)",
-            "Edit({root}/paper/**)",
-            "Edit({root}/code/**)",
-            "Write({root}/paper/**)",
-            "Write({root}/code/**)",
+            *_READ_TOOLS,
+            "Write",
+            "Edit",                 # can edit paper + code (prompt-constrained)
             *_BASH_SAFE,
         ],
     },
@@ -128,9 +130,8 @@ ROLES = {
             "revision/decision_state.json",
         ],
         "allowed_tools": [
-            *_BASE_ALLOWED,
-            "Write({root}/revision/**)",
-            "Edit({root}/revision/**)",
+            *_READ_TOOLS,
+            "Write",
             *_BASH_SAFE,
         ],
     },
@@ -148,11 +149,9 @@ ROLES = {
             "revision/task_registry.json",
         ],
         "allowed_tools": [
-            *_BASE_ALLOWED,
-            "Write({root}/revision/**)",
-            "Edit({root}/revision/**)",
-            "Edit({root}/paper/**)",
-            "Write({root}/paper/**)",
+            *_READ_TOOLS,
+            "Write",
+            "Edit",                 # can edit paper (prompt-constrained)
             *_BASH_SAFE,
         ],
     },
@@ -172,9 +171,8 @@ ROLES = {
             "revision/knowledge_state.json",
         ],
         "allowed_tools": [
-            *_BASE_ALLOWED,
-            "Write({root}/revision/**)",
-            "Edit({root}/revision/**)",
+            *_READ_TOOLS,
+            "Write",
             *_BASH_SAFE,
         ],
     },
@@ -308,11 +306,9 @@ def invoke_claude(
         "--max-turns", str(max_turns),
     ]
 
-    # Add per-role allowed tools, resolving {root} to absolute project path
-    abs_root = str(project_root)
+    # Add per-role allowed tools (unscoped — prompt constrains actual targets)
     for tool in role_def["allowed_tools"]:
-        resolved = tool.replace("{root}", abs_root)
-        cmd.extend(["--allowedTools", resolved])
+        cmd.extend(["--allowedTools", tool])
 
     if model:
         cmd.extend(["--model", model])
