@@ -20,27 +20,29 @@ from ..utils import get_package_root, iso_now
 # ---------------------------------------------------------------------------
 # Role definitions — each maps to a prompt file, state files, and permissions
 # ---------------------------------------------------------------------------
+#
+# Permission paths use placeholders: {root} is resolved at invocation time
+# to the absolute project root.  This is critical because --allowedTools
+# in dontAsk mode requires paths that Claude Code can actually match.
+#
+# Bash patterns do NOT need {root} — they match on command text, not paths.
+# ---------------------------------------------------------------------------
 
-# Base permissions shared by all roles: read anything in the project
 _BASE_ALLOWED = [
     "Read",                         # read any file
     "Glob",                         # find files by pattern
     "Grep",                         # search file contents
 ]
 
-# Only the implementer and writeback roles may edit project source files
-_EDIT_PAPER = "Edit(paper/**)"
-_EDIT_CODE = "Edit(code/**)"
-
-# All roles may write to revision/ state files
-_WRITE_REVISION = "Write(revision/**)"
-
-# Specific bash commands that are safe and useful
-_BASH_GIT_READONLY = "Bash(git diff *)"
-_BASH_GIT_STATUS = "Bash(git status *)"
-_BASH_GIT_LOG = "Bash(git log *)"
-_BASH_PYTHON_TIANXING = "Bash(python -m tianxing.*)"
-_BASH_PYTHON3_TIANXING = "Bash(python3 -m tianxing.*)"
+_BASH_SAFE = [
+    "Bash(git diff *)",
+    "Bash(git status *)",
+    "Bash(git log *)",
+    "Bash(python -m tianxing.*)",
+    "Bash(python3 -m tianxing.*)",
+    "Bash(ls *)",
+    "Bash(cat *)",
+]
 
 ROLES = {
     "auditor": {
@@ -58,9 +60,9 @@ ROLES = {
         ],
         "allowed_tools": [
             *_BASE_ALLOWED,
-            _WRITE_REVISION,
-            _BASH_GIT_READONLY,
-            _BASH_GIT_LOG,
+            "Write({root}/revision/**)",
+            "Edit({root}/revision/**)",
+            *_BASH_SAFE,
         ],
     },
     "planner": {
@@ -81,8 +83,9 @@ ROLES = {
         ],
         "allowed_tools": [
             *_BASE_ALLOWED,
-            _WRITE_REVISION,
-            _BASH_GIT_READONLY,
+            "Write({root}/revision/**)",
+            "Edit({root}/revision/**)",
+            *_BASH_SAFE,
         ],
     },
     "implementer": {
@@ -101,15 +104,13 @@ ROLES = {
         ],
         "allowed_tools": [
             *_BASE_ALLOWED,
-            _WRITE_REVISION,
-            _EDIT_PAPER,            # can edit paper source
-            _EDIT_CODE,             # can edit experiment code
-            "Write(paper/**)",      # can create new paper files
-            "Write(code/**)",       # can create new code files
-            _BASH_GIT_READONLY,
-            _BASH_GIT_STATUS,
-            _BASH_PYTHON_TIANXING,
-            _BASH_PYTHON3_TIANXING,
+            "Write({root}/revision/**)",
+            "Edit({root}/revision/**)",
+            "Edit({root}/paper/**)",
+            "Edit({root}/code/**)",
+            "Write({root}/paper/**)",
+            "Write({root}/code/**)",
+            *_BASH_SAFE,
         ],
     },
     "verifier": {
@@ -128,8 +129,9 @@ ROLES = {
         ],
         "allowed_tools": [
             *_BASE_ALLOWED,
-            _WRITE_REVISION,
-            _BASH_GIT_READONLY,
+            "Write({root}/revision/**)",
+            "Edit({root}/revision/**)",
+            *_BASH_SAFE,
         ],
     },
     "writeback": {
@@ -147,11 +149,11 @@ ROLES = {
         ],
         "allowed_tools": [
             *_BASE_ALLOWED,
-            _WRITE_REVISION,
-            _EDIT_PAPER,            # can edit paper source
-            "Write(revision/artifacts/**)",  # can write drafts
-            _BASH_PYTHON_TIANXING,  # can compile paper
-            _BASH_PYTHON3_TIANXING,
+            "Write({root}/revision/**)",
+            "Edit({root}/revision/**)",
+            "Edit({root}/paper/**)",
+            "Write({root}/paper/**)",
+            *_BASH_SAFE,
         ],
     },
     "reflector": {
@@ -171,9 +173,9 @@ ROLES = {
         ],
         "allowed_tools": [
             *_BASE_ALLOWED,
-            _WRITE_REVISION,
-            _BASH_GIT_READONLY,
-            _BASH_GIT_LOG,
+            "Write({root}/revision/**)",
+            "Edit({root}/revision/**)",
+            *_BASH_SAFE,
         ],
     },
 }
@@ -293,7 +295,7 @@ def invoke_claude(
     if role not in ROLES:
         raise ValueError(f"Unknown role: {role}. Available: {list(ROLES.keys())}")
 
-    project_root = Path(project_root)
+    project_root = Path(project_root).resolve()
     role_def = ROLES[role]
     prompt = build_task_prompt(role, project_root, task_context, extra_instructions)
 
@@ -306,9 +308,11 @@ def invoke_claude(
         "--max-turns", str(max_turns),
     ]
 
-    # Add per-role allowed tools
+    # Add per-role allowed tools, resolving {root} to absolute project path
+    abs_root = str(project_root)
     for tool in role_def["allowed_tools"]:
-        cmd.extend(["--allowedTools", tool])
+        resolved = tool.replace("{root}", abs_root)
+        cmd.extend(["--allowedTools", resolved])
 
     if model:
         cmd.extend(["--model", model])
