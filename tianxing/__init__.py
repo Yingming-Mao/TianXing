@@ -15,6 +15,10 @@ COMMANDS = {
     "notify": "tianxing.notify_status",
     "metrics": "tianxing.collect_metrics",
     "map": "tianxing.experiment_map",
+    # Revision system
+    "revise-setup": "tianxing.revision.revision_setup",
+    "revise": "tianxing.revision.revision_loop",
+    "revise-state": "tianxing.revision.revision_state_cli",
 }
 
 
